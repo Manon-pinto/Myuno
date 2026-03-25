@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello HomeController!{% endblock %}
+
+{% block body %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f1f8ff;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+    .container {
+        background: #fff;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+        max-width: 420px;
+        text-align: center;
+    }
+    .container h1 {
+        margin-bottom: 16px;
+        color: #0d47a1;
+    }
+    .container p {
+        margin-bottom: 24px;
+        color: #333;
+        line-height: 1.4;
+    }
+    .btn-start {
+        display: inline-block;
+        background: #1976d2;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 8px;
+        padding: 12px 22px;
+        font-weight: bold;
+    }
+    .btn-start:hover {
+        background: #0b57a5;
+    }
+</style>
+
+<div class="container">
+    <h1>MyUNO</h1>
+    <p>Bienvenue dans le jeu UNO en ligne. Vous allez affronter 3 joueurs contrôlés par l’IA.
+    
+    Cliquez sur le bouton pour démarrer une nouvelle partie et revenir à tout moment.</p>
+
+    <a class="btn-start" href="{{ path('app_start') }}">Lancer une partie</a>
+</div>
+{% endblock %}
