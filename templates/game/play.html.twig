@@ -2,19 +2,24 @@
 
 {% block title %}MyUNO - Table de jeu{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('styles/jeu.css') }}">
+{% endblock %}
+
 {% block body %}
 
 <h1>MyUNO</h1>
 
 {% set gagnant = null %}
 {% for joueur in game.joueurs %}
-    {# Si ce joueur n'a plus de cartes c'est lui le gagnant #}
+    {# si le joueur na plu de carte il a gagner #}
     {% if joueur.cartes|length == 0 %}
         {% set gagnant = joueur %}
     {% endif %}
 {% endfor %}
 
-{# Si on a trouvé un gagnant on redirige vers la page résultat #}
+{# si on a trouver un gagnant on le redirige vers les resultat #}
 {% if gagnant is not null or game.statut == 'termine' %}
     <script>window.location.href = "{{ path('app_result') }}";</script>
 {% endif %}
@@ -41,7 +46,7 @@
         <script>
             var idBot = {{ botActif is not null ? botActif.id : 'null' }};
 
-            var secondes = 3; // temps de jeu du bot
+            var secondes = 3; // le temps que le bot attend avan de jouer
 
             var intervalle = setInterval(function() {
                 secondes = secondes - 1;
@@ -52,9 +57,9 @@
                 }
 
                 if (secondes <= 0) {
-                    clearInterval(intervalle); // fin du compte a rebours
+                    clearInterval(intervalle); // on arrete le compte a rebour
 
-                    // On redirige vers /enemy=id du bot 
+                    // on redirige ver /enemy avec lid du bot
                     if (idBot !== null) {
                         window.location.href = '/enemy?id=' + idBot;
                     }
@@ -65,51 +70,82 @@
 {% endif %}
 
 
-<div class="zone-milieu">
+{# on recupere les 3 bots dans lordre #}
+{% set bots = [] %}
+{% for joueur in game.joueurs %}
+    {% if joueur.estHumain == false %}
+        {% set bots = bots|merge([joueur]) %}
+    {% endif %}
+{% endfor %}
 
-    <div class="bloc-pile">
-        <h2>Carte du dessus</h2>
+<div class="table-jeu">
 
-        {% set couleurPile = pile.couleurSommet %}
-
-        {% if couleurPile == 'rouge' %}
-            {% set classeCouleurPile = 'couleur-rouge' %}
-        {% elseif couleurPile == 'bleu' %}
-            {% set classeCouleurPile = 'couleur-bleu' %}
-        {% elseif couleurPile == 'vert' %}
-            {% set classeCouleurPile = 'couleur-vert' %}
-        {% elseif couleurPile == 'jaune' %}
-            {% set classeCouleurPile = 'couleur-jaune' %}
-        {% else %}
-            {% set classeCouleurPile = 'couleur-autre' %}
+    {# le bot en haut (en face) #}
+    <div class="bot-face">
+        {% if bots[1] is defined %}
+            <div class="bloc-bot {% if bots[1].position == game.tourActuel %}son-tour{% endif %}">
+                <span class="bot-nom">{{ bots[1].nom }}</span>
+                <span class="bot-cartes">{{ bots[1].cartes|length }}</span>
+            </div>
         {% endif %}
-
-        <div class="carte-pile {{ classeCouleurPile }}">
-            <span>{{ pile.couleurSommet }}</span>
-            <span>{{ pile.valeurSommet }}</span>
-        </div>
     </div>
 
-    <div class="bloc-bots">
-        <h2>Bots adversaires</h2>
+    {# la ligne du millieu avec le bot a gauche la pile au milieu et le bot a droite #}
+    <div class="ligne-milieu">
 
-        {% for joueur in game.joueurs %}
-            {% if joueur.estHumain == false %}
+        <div class="bot-gauche">
+            {% if bots[0] is defined %}
+                <div class="bloc-bot {% if bots[0].position == game.tourActuel %}son-tour{% endif %}">
+                    <span class="bot-nom">{{ bots[0].nom }}</span>
+                    <span class="bot-cartes"> {{ bots[0].cartes|length }}</span>
+                </div>
+            {% endif %}
+        </div>
 
-                {% if joueur.position == game.tourActuel %}
-                    <div class="joueur-bot son-tour">
-                {% else %}
-                    <div class="joueur-bot">
-                {% endif %}
+        <div class="bloc-pile">
+            {% set couleurPile = pile.couleurSommet %}
+            {% if couleurPile == 'rouge' %}
+                {% set classeCouleurPile = 'couleur-rouge' %}
+            {% elseif couleurPile == 'bleu' %}
+                {% set classeCouleurPile = 'couleur-bleu' %}
+            {% elseif couleurPile == 'vert' %}
+                {% set classeCouleurPile = 'couleur-vert' %}
+            {% elseif couleurPile == 'jaune' %}
+                {% set classeCouleurPile = 'couleur-jaune' %}
+            {% else %}
+                {% set classeCouleurPile = 'couleur-autre' %}
+            {% endif %}
 
-                    <span class="nom">{{ joueur.nom }}</span>
-
-                    <span class="nb-cartes">{{ joueur.cartes|length }}</span>
-
+            <h2>Carte du dessus</h2>
+            <div class="piles-container">
+                <div class="carte-pile {{ classeCouleurPile }}">
+                    <span>{{ pile.couleurSommet }}</span>
+                    <span>{{ pile.valeurSommet }}</span>
                 </div>
 
+                {% if estMonTour and game.statut == 'en_cours' %}
+                    {% set uneCarteJouable = false %}
+                    {% for carte in mainDuJoueur %}
+                        {% if cartesJouables[carte.id] %}
+                            {% set uneCarteJouable = true %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if not uneCarteJouable %}
+                        <a href="{{ path('app_draw') }}" class="bouton-pioche">Piocher une carte</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="bot-droite">
+            {% if bots[2] is defined %}
+                <div class="bloc-bot {% if bots[2].position == game.tourActuel %}son-tour{% endif %}">
+                    <span class="bot-nom">{{ bots[2].nom }}</span>
+                    <span class="bot-cartes"> {{ bots[2].cartes|length }}</span>
+                </div>
             {% endif %}
-        {% endfor %}
+        </div>
+
     </div>
 
 </div>
@@ -135,13 +171,13 @@
 
             {% set estJouable = cartesJouables[carte.id] %}
 
-                {# Si la partie est terminée : carte grisée, non cliquable #}
+                {# si la partie est finit on grise la carte et on peut pas cliquer dessus #}
             {% if game.statut == 'termine' %}
                 <div class="carte-bouton {{ classeCouleur }} non-jouable">
                     <span>{{ carte.couleur }}</span>
                     <span>{{ carte.valeur }}</span>
                 </div>
-            {# Si c'est le tour du joueur ET que la carte est jouable : lien cliquable #}
+            {# si cest notre tour et que la carte est jouable on met un lien cliquable #}
             {% elseif estMonTour and estJouable %}
 
                 <a href="{{ path('app_player', {id: carte.id}) }}"
@@ -164,22 +200,9 @@
         {% endfor %}
     </div>
 
-    {# Bouton piocher : visible seulement si c'est mon touret que je peux jouer aucune carte #}
-    {% if estMonTour and game.statut == 'en_cours' %}
-        {% set uneCarteJouable = false %}
-        {% for carte in mainDuJoueur %}
-            {% if cartesJouables[carte.id] %}
-                {% set uneCarteJouable = true %}
-            {% endif %}
-        {% endfor %}
-
-        {% if not uneCarteJouable %}
-            <a href="{{ path('app_draw') }}">Piocher une carte</a>
-        {% endif %}
-    {% endif %}
 
 </div>
 
-<a href="{{ path('app_home') }}" class="lien-retour">← Retour à l'accueil</a>
+<a href="{{ path('app_home') }}" class="lien-retour">← Abandonner la partie</a>
 
 {% endblock %}

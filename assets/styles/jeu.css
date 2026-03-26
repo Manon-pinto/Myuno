@@ -1,37 +1,45 @@
 body {
-    background-color: #1a6e2e;
-    font-family: Arial, sans-serif;
-    color: white;
+    font-family: 'Arial', sans-serif;
     margin: 0;
     padding: 20px;
 }
-
-h1 {
+.table-jeu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+.bot-face, .bot-gauche, .bot-droite {
+    display: flex;
+    gap: 10px;
+}
+.bloc-bot {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
     text-align: center;
-    font-size: 2.5em;
-    letter-spacing: 3px;
-    text-shadow: 2px 2px 4px black;
-    margin-bottom: 30px;
+    width: 100px;
 }
 
-.message-info {
-    text-align: center;
-    background-color: rgba(0,0,0,0.4);
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 1.3em;
-    margin-bottom: 20px;
+.ligne-milieu {
+    display: flex;
+    align-items: center;
+    gap: 50px;
 }
-
-.message-victoire {
-    text-align: center;
-    background-color: gold;
-    color: black;
-    font-size: 2em;
-    font-weight: bold;
+.pile {
+    background-color: #000000;
     padding: 20px;
-    border-radius: 15px;
-    margin-bottom: 20px;
-    box-shadow: 0 0 20px gold;
+    border-radius: 5px;
+    text-align: center;
+    width: 150px;
 }
-
+.carte-bouton {
+    display: inline-block;
+    padding: 10px;
+    border-radius: 5px;
+    color: #000000;
+    text-align: center;
+    width: 60px;
+    cursor: pointer;
+}
