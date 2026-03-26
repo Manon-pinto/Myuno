@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}MyUNO - Résultat{% endblock %}
+
+{% block body %}
+
+<div class="page-resultat">
+
+    <div class="resultat-contenu">
+
+        {% if gagnant is not null and gagnant.estHumain %}
+            <div class="resultat-victoire">
+                <h1>Félicitations !</h1>
+                <p>Vous avez gagné la partie !</p>
+            </div>
+        {% elseif gagnant is not null %}
+            <div class="resultat-defaite">
+                <h1>Partie terminée</h1>
+                <p><strong>{{ gagnant.nom }}</strong> a gagné la partie.</p>
+            </div>
+        {% else %}
+            <div class="resultat-defaite">
+                <h1>Partie terminée !</h1>
+            </div>
+        {% endif %}
+
+        <div class="scores">
+            <h2>Résumé</h2>
+            <ul>
+                {% for joueur in joueurs %}
+                    <li class="{{ joueur == gagnant ? 'gagnant' : '' }}">
+                        {{ joueur.estHumain ? 'Vous' : joueur.nom }}
+                        {% if joueur == gagnant %} (gagnant){% endif %}
+                        — {{ joueur.cartes|length }} carte(s) restante(s)
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <a href="{{ path('app_home') }}" class="btn-accueil">← Retour à l'accueil</a>
+
+    </div>
+
+</div>
+
+{% endblock %}

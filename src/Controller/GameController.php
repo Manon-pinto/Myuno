@@ -42,7 +42,7 @@ class GameController extends AbstractController
     #[Route('/start', name: 'app_start')]
     public function start(): Response
     {
-        // On ferme les anciennes parties avant d'en créer une nouvelle
+            // On termine toutes les parties en cours avant d'en démarrer une nouvelle
         $anciennesParties = $this->gameRepository->findBy(['statut' => 'en_cours']);
         foreach ($anciennesParties as $ancienne) {
             $ancienne->setStatut('termine');
@@ -59,7 +59,12 @@ class GameController extends AbstractController
         $game = $this->gameRepository->findOneBy(['statut' => 'en_cours']);
 
         if ($game === null) {
-            return $this->redirectToRoute('app_start');
+               // Si aucune partie n'est en cours, on cherche la dernière partie terminée pour afficher son état final
+            $game = $this->gameRepository->findOneBy(['statut' => 'termine'], ['id' => 'DESC']);
+
+            if ($game === null) {
+                return $this->redirectToRoute('app_start');
+            }
         }
 
         $joueurHumain = $this->joueurRepository->findOneBy([
@@ -88,10 +93,8 @@ class GameController extends AbstractController
 
         $pile = $game->getPile();
 
-        // Position 0 = joueur humain
         $estMonTour = $game->getTourActuel() === 0;
 
-        // Pour chaque carte : est-elle jouable ?
         $cartesJouables = [];
         foreach ($mainDuJoueur as $carte) {
             $cartesJouables[$carte->getId()] = $this->turnService->isCardPlayable($carte, $pile, $game->getPileDepioche());
@@ -104,6 +107,30 @@ class GameController extends AbstractController
             'pile'               => $pile,
             'estMonTour'         => $estMonTour,
             'cartesJouables'     => $cartesJouables,
+        ]);
+    }
+
+    #[Route('/result', name: 'app_result')]
+    public function result(): Response
+    {
+        $game = $this->gameRepository->findOneBy(['statut' => 'termine'], ['id' => 'DESC']);
+
+        if ($game === null) {
+            return $this->redirectToRoute('app_home');
+        }
+
+        $gagnant = null;
+        foreach ($game->getJoueurs() as $joueur) {
+            if (count($this->carteRepository->findBy(['joueur' => $joueur, 'Partie' => $game])) === 0) {
+                $gagnant = $joueur;
+                break;
+            }
+        }
+
+        return $this->render('game/result.html.twig', [
+            'game'    => $game,
+            'gagnant' => $gagnant,
+            'joueurs' => $game->getJoueurs(),
         ]);
     }
 

@@ -8,42 +8,40 @@
 
 {% set gagnant = null %}
 {% for joueur in game.joueurs %}
-    {# Si ce joueur n'a plus de cartes, c'est lui le gagnant #}
+    {# Si ce joueur n'a plus de cartes c'est lui le gagnant #}
     {% if joueur.cartes|length == 0 %}
         {% set gagnant = joueur %}
     {% endif %}
 {% endfor %}
 
-{# Si on a trouvé un gagnant, on affiche le message de victoire #}
-{% if gagnant is not null %}
-    <div class="message-victoire">
-        🏆 {{ gagnant.nom }} a gagné la partie ! Félicitations !
-    </div>
+{# Si on a trouvé un gagnant on redirige vers la page résultat #}
+{% if gagnant is not null or game.statut == 'termine' %}
+    <script>window.location.href = "{{ path('app_result') }}";</script>
 {% endif %}
 
 {% set botActif = null %}
 {% for joueur in game.joueurs %}
-    {# Ce joueur est un bot ET c'est son tour ? #}
+     
     {% if joueur.estHumain == false and joueur.position == game.tourActuel %}
         {% set botActif = joueur %}
     {% endif %}
 {% endfor %}
 
 
-{% if gagnant is null %}
+{% if gagnant is null and game.statut == 'en_cours' %}
     {% if estMonTour %}
         <div class="message-info">
             C'est votre tour ! Cliquez sur une carte pour la jouer.
         </div>
     {% else %}
         <div class="message-info">
-            Tour de {{ botActif is not null ? botActif.nom : }}... Chargement dans <span id="compte-a-rebours">3</span> secondes.
+            Tour de {{ botActif is not null ? botActif.nom :'' }}... Chargement dans <span id="compte-a-rebours">3</span> secondes.
         </div>
 
         <script>
             var idBot = {{ botActif is not null ? botActif.id : 'null' }};
 
-            var secondes = 3; // Durée du compte à rebours en secondes temps de joueur bot
+            var secondes = 3; // temps de jeu du bot
 
             var intervalle = setInterval(function() {
                 secondes = secondes - 1;
@@ -54,9 +52,9 @@
                 }
 
                 if (secondes <= 0) {
-                    clearInterval(intervalle); // On arrête le compte à rebours
+                    clearInterval(intervalle); // fin du compte a rebours
 
-                    // On redirige vers /enemy avec l'id du bot
+                    // On redirige vers /enemy=id du bot 
                     if (idBot !== null) {
                         window.location.href = '/enemy?id=' + idBot;
                     }
@@ -98,7 +96,6 @@
         {% for joueur in game.joueurs %}
             {% if joueur.estHumain == false %}
 
-                    {# Si c'est le tour de ce bot, on lui ajoute la classe "son-tour" #}
                 {% if joueur.position == game.tourActuel %}
                     <div class="joueur-bot son-tour">
                 {% else %}
@@ -107,7 +104,6 @@
 
                     <span class="nom">{{ joueur.nom }}</span>
 
-                    {# Le nombre de cartes restantes dans sa main #}
                     <span class="nb-cartes">{{ joueur.cartes|length }}</span>
 
                 </div>
@@ -119,14 +115,12 @@
 </div>
 
 <div class="bloc-main">
-    <h2>Vos cartes</h2>
+    <h2>Vos cartes ({{ mainDuJoueur|length }})</h2>
 
     <div class="main-cartes">
 
-        {# On parcourt toutes les cartes du joueur humain #}
         {% for carte in mainDuJoueur %}
 
-            {# On choisit la classe CSS de fond selon la couleur de la carte #}
             {% if carte.couleur == 'rouge' %}
                 {% set classeCouleur = 'couleur-rouge' %}
             {% elseif carte.couleur == 'bleu' %}
@@ -139,12 +133,17 @@
                 {% set classeCouleur = 'couleur-autre' %}
             {% endif %}
 
-     
             {% set estJouable = cartesJouables[carte.id] %}
 
+                {# Si la partie est terminée : carte grisée, non cliquable #}
+            {% if game.statut == 'termine' %}
+                <div class="carte-bouton {{ classeCouleur }} non-jouable">
+                    <span>{{ carte.couleur }}</span>
+                    <span>{{ carte.valeur }}</span>
+                </div>
             {# Si c'est le tour du joueur ET que la carte est jouable : lien cliquable #}
-            {% if estMonTour and estJouable %}
-                {# Le joueur clique sur la carte → redirige vers /player?id=X #}
+            {% elseif estMonTour and estJouable %}
+
                 <a href="{{ path('app_player', {id: carte.id}) }}"
                    class="carte-bouton {{ classeCouleur }}">
                     <span>{{ carte.couleur }}</span>
@@ -152,7 +151,7 @@
                 </a>
 
             {% else %}
-                {# Carte non jouable ou ce n'est pas le tour : carte grisée, non cliquable #}
+
                 <div class="carte-bouton {{ classeCouleur }} non-jouable">
                     <span>{{ carte.couleur }}</span>
                     <span>{{ carte.valeur }}</span>
@@ -161,14 +160,12 @@
             {% endif %}
 
         {% else %}
-            {# Ce message s'affiche si le joueur n'a plus aucune carte #}
             <p>Vous n'avez plus de cartes !</p>
         {% endfor %}
-
     </div>
 
-    {# Bouton piocher : visible seulement si c'est le tour du joueur et qu'aucune carte n'est jouable #}
-    {% if estMonTour %}
+    {# Bouton piocher : visible seulement si c'est mon touret que je peux jouer aucune carte #}
+    {% if estMonTour and game.statut == 'en_cours' %}
         {% set uneCarteJouable = false %}
         {% for carte in mainDuJoueur %}
             {% if cartesJouables[carte.id] %}
